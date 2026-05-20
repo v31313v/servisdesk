@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ action }} — НЕВЕКС{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'ticket_list' %}">Заявки</a></li>
+        <li class="breadcrumb-item active">{{ action }}</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">{{ action }}</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.subject.label }} <span class="text-danger">*</span></label>
+                            {{ form.subject }}
+                            {% if form.subject.errors %}
+                            <div class="text-danger small">{{ form.subject.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.ticket_type.label }}</label>
+                            {{ form.ticket_type }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.description.label }} <span class="text-danger">*</span></label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                        <div class="text-danger small">{{ form.description.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.initiator.label }} <span class="text-danger">*</span></label>
+                            {{ form.initiator }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.initiator_department.label }}</label>
+                            {{ form.initiator_department }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.initiator_phone.label }}</label>
+                            {{ form.initiator_phone }}
+                            {% if form.initiator_phone.errors %}
+                            <div class="text-danger small">{{ form.initiator_phone.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.initiator_email.label }}</label>
+                            {{ form.initiator_email }}
+                            {% if form.initiator_email.errors %}
+                            <div class="text-danger small">{{ form.initiator_email.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.project.label }}</label>
+                            {{ form.project }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.document_number.label }}</label>
+                            {{ form.document_number }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.priority.label }}</label>
+                            {{ form.priority }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.deadline.label }}</label>
+                            {{ form.deadline }}
+                        </div>
+                    </div>
+                      {% if user.profile.role == 'manager' %}
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">{{ form.assigned_to.label }}</label>
+                        {{ form.assigned_to }}
+                    </div>
+                </div>
+                {% endif %}
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'ticket_list' %}" class="btn btn-secondary">Отмена</a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-save"></i> Сохранить
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

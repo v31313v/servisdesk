@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Вход — НЕВЕКС ServiceDesk{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow">
+            <div class="card-body p-5">
+                <div class="text-center mb-4">
+                    <h3 class="fw-bold">ООО «ПКБ "НЕВЕКС"»</h3>
+                    <p class="text-muted">Система учёта обращений</p>
+                </div>
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label">Логин</label>
+                        <input type="text" name="username" id="id_username"
+                               class="form-control {% if form.errors %}is-invalid{% endif %}"
+                               placeholder="Введите логин" required autofocus>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_password" class="form-label">Пароль</label>
+                        <input type="password" name="password" id="id_password"
+                               class="form-control {% if form.errors %}is-invalid{% endif %}"
+                               placeholder="Введите пароль" required>
+                        {% if form.errors %}
+                        <div class="invalid-feedback d-block">
+                            Неверный логин или пароль
+                        </div>
+                        {% endif %}
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 btn-lg">
+                        <i class="bi bi-box-arrow-in-right"></i> Войти
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

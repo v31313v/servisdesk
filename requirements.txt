@@ -1,0 +1,6 @@
+Django==5.0.4
+django-filter==24.2
+psycopg2-binary==2.9.9
+Pillow==10.3.0
+selenium==4.19.0
+locust==2.24.1

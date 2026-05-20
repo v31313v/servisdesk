@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+
+{% block title %}Заявки — НЕВЕКС ServiceDesk{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold mb-0">
+        <i class="bi bi-list-ul"></i>
+        {% if user.profile.role == 'manager' %}
+            Все заявки
+        {% else %}
+            Мои заявки
+        {% endif %}
+        <span class="badge bg-secondary">{{ total_count }}</span>
+    </h3>
+    <a href="{% url 'ticket_create' %}" class="btn btn-success">
+        <i class="bi bi-plus-circle"></i> Создать заявку
+    </a>
+</div>
+
+<!-- Квадраты со статусами -->
+<div class="row mb-4" id="statusCards">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white" data-status="new" style="cursor:pointer;">
+            <div class="card-body text-center">
+                <h3>{{ new_count }}</h3>
+                <small>Новых</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white" data-status="in_progress" style="cursor:pointer;">
+            <div class="card-body text-center">
+                <h3>{{ in_progress_count }}</h3>
+                <small>В работе</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white" data-status="resolved" style="cursor:pointer;">
+            <div class="card-body text-center">
+                <h3>{{ resolved_count }}</h3>
+                <small>Решено</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark" data-status="frozen" style="cursor:pointer;">
+            <div class="card-body text-center">
+                <h3>{{ frozen_count }}</h3>
+                <small>Заморожено</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Фильтры -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">{{ filter.form.status.label }}</label>
+                {{ filter.form.status }}
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">{{ filter.form.ticket_type.label }}</label>
+                {{ filter.form.ticket_type }}
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">{{ filter.form.date_from.label }}</label>
+                {{ filter.form.date_from }}
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">{{ filter.form.date_to.label }}</label>
+                {{ filter.form.date_to }}
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-funnel"></i>
+                </button>
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <a href="{% url 'ticket_list' %}" class="btn btn-outline-secondary w-100">
+                    <i class="bi bi-x-circle"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Основная таблица заявок -->
+{% if tickets %}
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th><a href="?sort={% if sort == 'id' %}-id{% else %}id{% endif %}" class="text-decoration-none text-dark">ID {% if sort == 'id' %}▲{% elif sort == '-id' %}▼{% endif %}</a></th>
+                <th><a href="?sort={% if sort == 'subject' %}-subject{% else %}subject{% endif %}" class="text-decoration-none text-dark">Тема {% if sort == 'subject' %}▲{% elif sort == '-subject' %}▼{% endif %}</a></th>
+                <th>Инициатор</th>
+                <th>Проект</th>
+                <th>Тип</th>
+                <th><a href="?sort={% if sort == 'priority' %}-priority{% else %}priority{% endif %}" class="text-decoration-none text-dark">Приоритет {% if sort == 'priority' %}▲{% elif sort == '-priority' %}▼{% endif %}</a></th>
+                <th><a href="?sort={% if sort == 'status' %}-status{% else %}status{% endif %}" class="text-decoration-none text-dark">Статус {% if sort == 'status' %}▲{% elif sort == '-status' %}▼{% endif %}</a></th>
+                <th><a href="?sort={% if sort == 'created_at' %}-created_at{% else %}created_at{% endif %}" class="text-decoration-none text-dark">Дата {% if sort == 'created_at' %}▲{% elif sort == '-created_at' %}▼{% endif %}</a></th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ticket in tickets %}
+            <tr class="{% if ticket.is_overdue %}table-danger{% endif %}">
+                <td><strong>#{{ ticket.pk }}</strong></td>
+                <td>
+                    <a href="{{ ticket.get_absolute_url }}" class="text-decoration-none">
+                        {{ ticket.subject|truncatechars:60 }}
+                    </a>
+                </td>
+                <td>{{ ticket.initiator|truncatechars:25 }}</td>
+                <td>{{ ticket.project.code|default:"—" }}</td>
+                <td>{{ ticket.ticket_type.name|default:"—" }}</td>
+                <td><span class="{{ ticket.priority_badge_class }}">{{ ticket.get_priority_display }}</span></td>
+                <td><span class="{{ ticket.status_badge_class }}">{{ ticket.get_status_display }}</span></td>
+                <td>{{ ticket.created_at|date:"d.m.Y" }}</td>
+                <td>
+                    <a href="{{ ticket.get_absolute_url }}" class="btn btn-sm btn-outline-primary" title="Просмотр">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                    {% if user.profile.role == 'manager' %}
+                    <a href="{% url 'ticket_edit' ticket.pk %}" class="btn btn-sm btn-outline-warning" title="Редактировать">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <a href="{% url 'ticket_delete' ticket.pk %}" class="btn btn-sm btn-outline-danger" title="Удалить">
+                        <i class="bi bi-trash"></i>
+                    </a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if page_obj.has_other_pages %}
+    <nav>
+        <ul class="pagination justify-content-center mt-3">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1&sort={{ sort }}">&laquo; Первая</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&sort={{ sort }}">Назад</a>
+            </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
+                <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                    <a class="page-link" href="?page={{ num }}&sort={{ sort }}">{{ num }}</a>
+                </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}&sort={{ sort }}">Вперёд</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&sort={{ sort }}">Последняя &raquo;</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-inbox display-1 text-muted"></i>
+    <p class="text-muted mt-3">Заявок не найдено</p>
+</div>
+{% endif %}
+
+<!-- Модальное окно для квадратов -->
+<div class="modal fade" id="statusModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="statusModalLabel"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="statusModalBody"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('#statusCards .card').forEach(card => {
+    card.addEventListener('click', function() {
+        const status = this.dataset.status;
+        document.getElementById('statusModalLabel').innerText = this.querySelector('small').innerText;
+        fetch(`/tickets/api/${status}/`)
+            .then(resp => resp.text())
+            .then(html => {
+                document.getElementById('statusModalBody').innerHTML = html;
+                new bootstrap.Modal(document.getElementById('statusModal')).show();
+            });
+    });
+});
+</script>
+{% endblock %}

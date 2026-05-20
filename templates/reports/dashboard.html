@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}Отчёты — НЕВЕКС{% endblock %}
+
+{% block content %}
+<h3 class="fw-bold mb-4"><i class="bi bi-bar-chart"></i> Отчёты</h3>
+
+<form method="get" class="row g-3 mb-4">
+    <div class="col-md-3">
+        <label class="form-label">Дата с</label>
+        <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Дата по</label>
+        <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+    </div>
+    <div class="col-md-2 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary w-100">Сформировать</button>
+    </div>
+</form>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white shadow-sm">
+            <div class="card-body text-center">
+                <h3>{{ total }}</h3>
+                <small>Всего заявок</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark shadow-sm">
+            <div class="card-body text-center">
+                <h3>{{ open_count }}</h3>
+                <small>Открыто</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white shadow-sm">
+            <div class="card-body text-center">
+                <h3>{{ resolved_count }}</h3>
+                <small>Решено</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-secondary text-white shadow-sm">
+            <div class="card-body text-center">
+                <h3>{{ closed_count }}</h3>
+                <small>Закрыто</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if avg_resolution %}
+<div class="alert alert-info">
+    <i class="bi bi-clock"></i> Среднее время решения: <strong>{{ avg_resolution }} ч.</strong>
+</div>
+{% endif %}
+
+<div class="col-md-2 d-flex align-items-end">
+    <a href="?{% if date_from %}date_from={{ date_from }}&{% endif %}{% if date_to %}date_to={{ date_to }}&{% endif %}export=excel" class="btn btn-success w-100">
+        <i class="bi bi-download"></i> Excel
+    </a>
+</div>
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header"><h6 class="mb-0">По типам обращений</h6></div>
+            <div class="card-body">
+                <canvas id="byTypeChart" width="400" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header"><h6 class="mb-0">По статусам</h6></div>
+            <div class="card-body">
+                <canvas id="byStatusChart" width="400" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if by_operator %}
+<div class="card shadow-sm mb-4">
+    <div class="card-header"><h6 class="mb-0">Загрузка операторов</h6></div>
+    <div class="card-body">
+        <table class="table table-sm">
+            <thead>
+                <tr><th>Оператор</th><th>Заявок</th></tr>
+            </thead>
+            <tbody>
+                {% for op in by_operator %}
+                <tr>
+                    <td>{{ op.author__last_name }} {{ op.author__first_name }}</td>
+                    <td>{{ op.count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var typeLabels = {{ by_type_labels|safe }};
+    var typeCounts = {{ by_type_counts|safe }};
+
+    if (typeLabels.length > 0) {
+        new Chart(document.getElementById('byTypeChart'), {
+            type: 'doughnut',
+            data: {
+                labels: typeLabels,
+                datasets: [{
+                    data: typeCounts,
+                    backgroundColor: ['#0d6efd', '#0dcaf0', '#ffc107', '#dc3545', '#198754', '#6c757d'],
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+    }
+
+    var statusLabels = {{ by_status_labels|safe }};
+    var statusCounts = {{ by_status_counts|safe }};
+
+    if (statusLabels.length > 0) {
+        new Chart(document.getElementById('byStatusChart'), {
+            type: 'bar',
+            data: {
+                labels: statusLabels,
+                datasets: [{
+                    label: 'Заявок',
+                    data: statusCounts,
+                    backgroundColor: ['#0d6efd','#0dcaf0','#198754','#6c757d']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
